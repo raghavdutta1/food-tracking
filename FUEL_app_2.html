@@ -1,0 +1,1924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FUEL — Calorie & Macro Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0E0F11;
+    --bg-elevated: #17181B;
+    --bg-card: #1C1D21;
+    --line: #2A2B2F;
+    --text: #F2EFE9;
+    --text-dim: #8C8D92;
+    --text-faint: #5A5B60;
+    --lime: #C8FF4D;
+    --lime-dim: #C8FF4D33;
+    --coral: #FF5C4D;
+    --coral-dim: #FF5C4D26;
+    --blue: #5C7FFF;
+    --blue-dim: #5C7FFF26;
+    --amber: #FFB84D;
+    --amber-dim: #FFB84D26;
+    --radius-lg: 24px;
+    --radius-md: 16px;
+    --radius-sm: 10px;
+  }
+
+  *{ box-sizing: border-box; margin:0; padding:0; -webkit-tap-highlight-color: transparent; }
+
+  html, body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overscroll-behavior-y: contain;
+  }
+
+  body{
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+    min-height: 100vh;
+    padding-bottom: 100px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 20px 20px 8px;
+  }
+  .brand{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700; font-size:22px; letter-spacing:-0.02em;
+    display:flex; align-items:center; gap:8px;
+  }
+  .brand .dot{
+    width:9px; height:9px; border-radius:50%;
+    background: var(--lime);
+    box-shadow: 0 0 12px var(--lime);
+  }
+  .icon-btn{
+    width:40px; height:40px; border-radius:50%;
+    background: var(--bg-card); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    color: var(--text-dim); cursor:pointer;
+    transition: all .15s ease;
+  }
+  .icon-btn:active{ transform: scale(0.92); }
+
+  .date-row{
+    display:flex; align-items:center; justify-content:center; gap:14px;
+    padding: 4px 20px 18px;
+  }
+  .date-row button{
+    background:none; border:none; color:var(--text-faint);
+    width:30px; height:30px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; border-radius:50%;
+  }
+  .date-row button:active{ background: var(--bg-card); }
+  .date-label-btn{
+    display:flex; align-items:center; gap:8px;
+    background: var(--bg-card); border:1px solid var(--line);
+    border-radius: 20px; padding: 8px 16px;
+    cursor:pointer; transition: border-color .15s ease;
+  }
+  .date-label-btn:active{ border-color: var(--lime); }
+  .date-label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px; color: var(--text-dim); letter-spacing:0.04em;
+    min-width:100px; text-align:center;
+  }
+  .date-label-btn .cal-ic{ font-size:13px; color: var(--text-faint); }
+
+  .streak-badge{
+    display:flex; align-items:center; gap:6px;
+    background: var(--lime-dim); border:1px solid #C8FF4D40;
+    border-radius: 20px; padding:7px 12px;
+    font-family:'JetBrains Mono', monospace; font-size:12px; font-weight:700;
+    color: var(--lime); white-space:nowrap;
+  }
+  .streak-badge.empty{
+    background: var(--bg-card); border-color: var(--line); color: var(--text-faint);
+  }
+
+  /* ---------- Calendar modal ---------- */
+  .cal-month-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 4px 4px 16px;
+  }
+  .cal-month-label{
+    font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:17px;
+  }
+  .cal-nav-btn{
+    width:34px; height:34px; border-radius:50%; background: var(--bg-card);
+    border:1px solid var(--line); color: var(--text-dim);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .cal-nav-btn:active{ background: var(--bg-elevated); }
+  .cal-weekdays{
+    display:grid; grid-template-columns: repeat(7,1fr);
+    margin-bottom:6px;
+  }
+  .cal-weekdays div{
+    text-align:center; font-size:10px; color: var(--text-faint);
+    text-transform:uppercase; letter-spacing:0.06em; font-weight:600;
+    padding-bottom:6px;
+  }
+  .cal-grid{
+    display:grid; grid-template-columns: repeat(7,1fr);
+    gap:4px;
+  }
+  .cal-day{
+    aspect-ratio: 1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    border-radius: 12px; cursor:pointer; position:relative;
+    font-family:'JetBrains Mono', monospace; font-size:13px; color: var(--text-dim);
+    background: var(--bg-card); border:1px solid transparent;
+    animation: popIn 0.25s cubic-bezier(.16,1,.3,1) backwards;
+  }
+  @keyframes popIn{ from{ opacity:0; transform: scale(0.7);} to{opacity:1; transform:scale(1);} }
+  .cal-day.empty-cell{ background:none; cursor:default; }
+  .cal-day.future{ opacity:0.25; cursor:default; }
+  .cal-day.today{ border-color: var(--lime); color: var(--text); font-weight:700; }
+  .cal-day.selected{ background: var(--lime); color: #0E0F11; font-weight:700; }
+  .cal-day:active:not(.empty-cell):not(.future){ transform: scale(0.92); }
+  .cal-day .dot-row{ display:flex; gap:3px; margin-top:3px; height:5px; }
+  .cal-day .dot{ width:5px; height:5px; border-radius:50%; }
+  .cal-day .dot.hit{ background: var(--lime); }
+  .cal-day .dot.over{ background: var(--coral); }
+  .cal-day .dot.logged{ background: var(--blue); }
+  .cal-day.selected .dot{ background: #0E0F11; opacity:0.5; }
+
+  .cal-legend{
+    display:flex; gap:16px; justify-content:center; padding: 18px 4px 4px;
+    font-size:11px; color: var(--text-faint);
+  }
+  .cal-legend span{ display:flex; align-items:center; gap:5px; }
+  .cal-legend .dot{ width:6px; height:6px; border-radius:50%; }
+
+  /* ---------- Gauge hero ---------- */
+  .gauge-section{
+    padding: 8px 20px 4px;
+    display:flex; flex-direction:column; align-items:center;
+    position:relative;
+  }
+  .gauge-glow{
+    position:absolute; top: 30px; left:50%; transform: translateX(-50%);
+    width: 320px; height: 320px; border-radius:50%;
+    background: radial-gradient(circle, var(--lime-dim) 0%, transparent 68%);
+    opacity: 0.6; pointer-events:none;
+    animation: breathe 4s ease-in-out infinite;
+    transition: background 0.4s ease;
+    z-index:0;
+  }
+  .gauge-glow.over{ background: radial-gradient(circle, var(--coral-dim) 0%, transparent 68%); }
+  @keyframes breathe{ 0%,100%{ opacity:0.45; transform: translateX(-50%) scale(1);} 50%{ opacity:0.7; transform: translateX(-50%) scale(1.06);} }
+  .gauge-wrap{
+    position:relative; width: 280px; height: 280px; z-index:1;
+  }
+  .gauge-wrap svg{ width:100%; height:100%; transform: rotate(-90deg); }
+  .gauge-bg{ fill:none; stroke: var(--bg-card); stroke-width: 14; }
+  .gauge-fill{
+    fill:none; stroke: var(--lime); stroke-width: 14; stroke-linecap: round;
+    transition: stroke-dashoffset 1s cubic-bezier(.16,1,.3,1), stroke 0.4s ease;
+    filter: drop-shadow(0 0 10px var(--lime-dim));
+  }
+  .gauge-fill.over{ stroke: var(--coral); filter: drop-shadow(0 0 10px var(--coral-dim)); }
+  .gauge-fill.hit{ filter: drop-shadow(0 0 16px var(--lime)); }
+  .gauge-center{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:2px;
+  }
+  .gauge-num{
+    font-family:'JetBrains Mono', monospace; font-weight:700;
+    font-size:48px; letter-spacing:-0.02em; line-height:1;
+    font-variant-numeric: tabular-nums;
+  }
+  .gauge-label{
+    font-size:12px; color: var(--text-dim); text-transform:uppercase;
+    letter-spacing:0.12em; margin-top:6px; font-weight:600;
+  }
+  .gauge-sub{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px; color: var(--text-faint); margin-top:10px;
+    display:flex; gap:14px;
+  }
+  .gauge-sub span b{ color: var(--text-dim); font-weight:600; }
+
+  /* tick marks around gauge */
+  .gauge-ticks{ position:absolute; inset:0; }
+  .gauge-ticks div{
+    position:absolute; left:50%; top:50%;
+    width:2px; height:8px; background: var(--text-faint);
+    transform-origin: 50% 140px;
+    opacity:0.4;
+  }
+
+  /* ---------- Macro rings row ---------- */
+  .macro-row{
+    display:flex; gap:12px; padding: 24px 20px 8px;
+  }
+  .macro-card{
+    flex:1; background: var(--bg-card); border:1px solid var(--line);
+    border-radius: var(--radius-md); padding: 14px 12px;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+  }
+  .macro-ring{ position:relative; width:56px; height:56px; }
+  .macro-ring svg{ width:100%; height:100%; transform: rotate(-90deg); }
+  .macro-ring-bg{ fill:none; stroke:var(--bg-elevated); stroke-width:5; }
+  .macro-ring-fill{
+    fill:none; stroke-width:5; stroke-linecap:round;
+    transition: stroke-dashoffset 0.8s cubic-bezier(.16,1,.3,1);
+  }
+  .macro-ring-icon{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:18px;
+  }
+  .macro-name{
+    font-size:11px; color:var(--text-dim); text-transform:uppercase;
+    letter-spacing:0.08em; font-weight:600;
+  }
+  .macro-amt{
+    font-family:'JetBrains Mono', monospace; font-size:13px; font-weight:600;
+    font-variant-numeric: tabular-nums;
+  }
+  .macro-amt .of{ color: var(--text-faint); font-weight:500; }
+
+  /* ---------- Section headers ---------- */
+  .section-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 28px 20px 12px;
+  }
+  .section-title{
+    font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:17px;
+  }
+  .section-action{
+    font-size:12px; color: var(--lime); font-weight:600; cursor:pointer;
+    background:none; border:none; font-family:'Inter',sans-serif;
+  }
+
+  /* ---------- Log list ---------- */
+  .log-list{ padding: 0 20px; display:flex; flex-direction:column; gap:10px; }
+  .log-empty{
+    background: var(--bg-card); border:1px dashed var(--line);
+    border-radius: var(--radius-md); padding: 32px 20px;
+    text-align:center; color: var(--text-faint); font-size:13px;
+  }
+  .log-empty .big{
+    font-family:'Space Grotesk',sans-serif; color: var(--text-dim);
+    font-size:15px; margin-bottom:4px; font-weight:600;
+  }
+  .log-item{
+    background: var(--bg-card); border:1px solid var(--line);
+    border-radius: var(--radius-md); padding: 12px 14px;
+    display:flex; align-items:center; gap:12px;
+    animation: slideIn 0.3s cubic-bezier(.16,1,.3,1);
+  }
+  @keyframes slideIn{ from{ opacity:0; transform: translateY(8px);} to{opacity:1; transform:translateY(0);} }
+  .log-thumb{
+    width:48px; height:48px; border-radius: var(--radius-sm);
+    background: var(--bg-elevated); object-fit:cover; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:20px;
+  }
+  .log-info{ flex:1; min-width:0; }
+  .log-name{ font-size:14px; font-weight:600; margin-bottom:2px;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .log-macros{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--text-faint);
+    display:flex; gap:8px;
+  }
+  .log-macros .p{ color:#7C97FF; } .log-macros .c{ color:#FFB84D; } .log-macros .f{ color:#FF8C7A; } .log-macros .fi{ color:#7DDB9C; }
+  .log-cal{
+    font-family:'JetBrains Mono', monospace; font-weight:700; font-size:16px;
+    color: var(--lime); flex-shrink:0;
+  }
+  .log-del{
+    background:none; border:none; color: var(--text-faint);
+    width:28px; height:28px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; flex-shrink:0; border-radius:50%;
+  }
+  .log-del:active{ background: var(--bg-elevated); color: var(--coral); }
+
+  /* ---------- FAB ---------- */
+  .fab-row{
+    position: fixed; bottom: 24px; left:50%; transform: translateX(-50%);
+    max-width: 480px; width: calc(100% - 40px);
+    display:flex; gap:12px; z-index: 50;
+  }
+  .fab{
+    flex:1; height:58px; border-radius: 18px; border:none;
+    font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:15px;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    cursor:pointer; transition: transform .12s ease;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .fab:active{ transform: scale(0.96); }
+  .fab-camera{
+    background: var(--lime); color: #0E0F11;
+    flex: 1.3;
+  }
+  .fab-manual{
+    background: var(--bg-card); color: var(--text);
+    border:1px solid var(--line);
+  }
+
+  /* ---------- Modal base ---------- */
+  .modal-overlay{
+    position: fixed; inset:0; background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(4px);
+    z-index: 100; display:none; align-items:flex-end; justify-content:center;
+  }
+  .modal-overlay.open{ display:flex; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn{ from{opacity:0;} to{opacity:1;} }
+  .modal{
+    background: var(--bg-elevated); width:100%; max-width:480px;
+    border-radius: 28px 28px 0 0; max-height: 90vh; overflow-y:auto;
+    animation: slideUp 0.32s cubic-bezier(.16,1,.3,1);
+    padding-bottom: 30px;
+  }
+  @keyframes slideUp{ from{ transform: translateY(100%);} to{transform:translateY(0);} }
+  .modal-handle{
+    width:36px; height:4px; background: var(--line); border-radius:4px;
+    margin: 12px auto 6px;
+  }
+  .modal-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 12px 20px 16px;
+  }
+  .modal-title{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:19px; }
+  .modal-close{
+    width:32px; height:32px; border-radius:50%; background:var(--bg-card);
+    border:1px solid var(--line); color:var(--text-dim);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .modal-body{ padding: 0 20px; }
+
+  /* ---------- Form elements ---------- */
+  .field{ margin-bottom:16px; }
+  .field label{
+    display:block; font-size:12px; color: var(--text-dim);
+    text-transform:uppercase; letter-spacing:0.08em; font-weight:600; margin-bottom:8px;
+  }
+  .field input, .field select{
+    width:100%; background: var(--bg-card); border:1px solid var(--line);
+    border-radius: var(--radius-sm); padding: 14px 14px; color: var(--text);
+    font-size:15px; font-family:'Inter',sans-serif; outline:none;
+  }
+  .field input:focus, .field select:focus{ border-color: var(--lime); }
+  .field-row{ display:flex; gap:10px; }
+  .field-row .field{ flex:1; }
+  .macro-input-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+
+  .btn-primary{
+    width:100%; padding:16px; border-radius: var(--radius-sm); border:none;
+    background: var(--lime); color:#0E0F11; font-weight:700; font-size:15px;
+    font-family:'Space Grotesk',sans-serif; cursor:pointer; margin-top:6px;
+  }
+  .btn-primary:active{ transform: scale(0.98); }
+  .btn-primary:disabled{ opacity:0.5; }
+  .btn-secondary{
+    width:100%; padding:14px; border-radius: var(--radius-sm);
+    background:none; border:1px solid var(--line); color: var(--text-dim);
+    font-weight:600; font-size:14px; cursor:pointer; margin-top:10px;
+    font-family:'Inter',sans-serif;
+  }
+
+  /* ---------- Camera capture ---------- */
+  .capture-zone{
+    border: 2px dashed var(--line); border-radius: var(--radius-md);
+    padding: 36px 20px; text-align:center; cursor:pointer;
+    transition: border-color .2s ease;
+    margin-bottom: 16px;
+  }
+  .capture-zone:active{ border-color: var(--lime); }
+  .capture-icon{ font-size:36px; margin-bottom:10px; }
+  .capture-text{ font-weight:600; font-size:14px; margin-bottom:4px; }
+  .capture-sub{ font-size:12px; color: var(--text-faint); }
+  .preview-img{
+    width:100%; border-radius: var(--radius-md); margin-bottom:16px;
+    max-height:240px; object-fit:cover;
+  }
+
+  .analyzing{
+    display:flex; flex-direction:column; align-items:center; gap:14px;
+    padding: 30px 0;
+  }
+  .spinner{
+    width:44px; height:44px; border-radius:50%;
+    border: 3px solid var(--bg-card); border-top-color: var(--lime);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+  .analyzing-text{ font-size:13px; color: var(--text-dim); font-weight:500; }
+  .analyzing-sub{ font-size:11px; color: var(--text-faint); font-family:'JetBrains Mono',monospace; }
+
+  .result-card{
+    background: var(--bg-card); border:1px solid var(--line);
+    border-radius: var(--radius-md); padding:16px; margin-bottom:16px;
+  }
+  .result-name{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:17px; margin-bottom:4px; }
+  .result-conf{ font-size:11px; color: var(--text-faint); margin-bottom:14px; font-family:'JetBrains Mono',monospace; }
+  .result-macros{ display:grid; grid-template-columns: repeat(auto-fit, minmax(58px,1fr)); gap:8px; }
+  .result-macro{
+    background: var(--bg-elevated); border-radius: var(--radius-sm);
+    padding:10px 6px; text-align:center;
+  }
+  .result-macro .val{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:15px; }
+  .result-macro .lbl{ font-size:10px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.06em; margin-top:2px; }
+
+  .error-box{
+    background: var(--coral-dim); border:1px solid var(--coral);
+    border-radius: var(--radius-sm); padding:14px; font-size:13px;
+    color: #FFB3AB; margin-bottom:16px; line-height:1.5;
+  }
+  .error-box b{ color: var(--coral); }
+
+  /* ---------- Smart lookup ---------- */
+  .smart-input-row{
+    display:flex; gap:8px;
+  }
+  .smart-input-row input{ flex:1; }
+  .smart-btn{
+    width:50px; height:50px; flex-shrink:0; border-radius: var(--radius-sm);
+    background: linear-gradient(135deg, var(--lime), #9FE066);
+    border:none; font-size:20px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition: transform .12s ease;
+  }
+  .smart-btn:active{ transform: scale(0.92); }
+  .smart-btn:disabled{ opacity:0.4; }
+  .smart-btn.spinning{ animation: spin 0.8s linear infinite; }
+  .smart-hint{
+    font-size:11px; color: var(--text-faint); margin-top:7px; line-height:1.4;
+  }
+  .smart-status{
+    border-radius: var(--radius-sm); padding:12px 14px; margin: 10px 0 16px;
+    font-size:13px; display:flex; align-items:center; gap:10px;
+  }
+  .smart-status.loading{
+    background: var(--bg-card); border:1px solid var(--line); color: var(--text-dim);
+  }
+  .smart-status.success{
+    background: var(--lime-dim); border:1px solid #C8FF4D40; color: var(--lime);
+    flex-direction:column; align-items:flex-start; gap:6px;
+  }
+  .smart-status.error{
+    background: var(--coral-dim); border:1px solid var(--coral); color:#FFB3AB;
+  }
+  .smart-status .ss-title{ font-weight:700; display:flex; align-items:center; gap:8px; }
+  .smart-status .ss-macros{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--text-dim);
+    display:flex; gap:10px; flex-wrap:wrap;
+  }
+  .smart-mini-spinner{
+    width:14px; height:14px; border-radius:50%;
+    border: 2px solid var(--bg-elevated); border-top-color: var(--lime);
+    animation: spin 0.7s linear infinite; flex-shrink:0;
+  }
+  /* ---------- Quick add chips ---------- */
+  .chip-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+  .chip{
+    background: var(--bg-card); border:1px solid var(--line);
+    border-radius: 20px; padding:8px 14px; font-size:12px;
+    color: var(--text-dim); cursor:pointer; font-weight:500;
+  }
+  .chip:active{ background: var(--bg-elevated); border-color: var(--lime); color: var(--lime); }
+
+  /* ---------- Settings modal ---------- */
+  .toggle-group{
+    display:flex; background: var(--bg-card); border-radius: var(--radius-sm);
+    padding:4px; margin-bottom: 16px; border:1px solid var(--line);
+  }
+  .toggle-btn{
+    flex:1; padding:10px; text-align:center; border-radius:8px;
+    font-size:13px; font-weight:600; cursor:pointer; color: var(--text-faint);
+    transition: all .15s ease;
+  }
+  .toggle-btn.active{ background: var(--lime); color:#0E0F11; }
+
+  .goal-preview{
+    background: var(--bg-card); border:1px solid var(--line);
+    border-radius: var(--radius-md); padding:16px; margin: 16px 0;
+    display:grid; grid-template-columns: repeat(4,1fr); gap:10px;
+  }
+  .goal-preview .item{ text-align:center; }
+  .goal-preview .item .v{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:16px; color: var(--lime); }
+  .goal-preview .item .l{ font-size:10px; color: var(--text-faint); text-transform:uppercase; margin-top:3px; letter-spacing:0.05em; }
+
+  .api-key-note{
+    font-size:12px; color: var(--text-faint); line-height:1.6; margin-top:6px;
+  }
+  .api-key-note a{ color: var(--blue); text-decoration:none; }
+
+  /* ---------- Protein nudge ---------- */
+  .protein-nudge{
+    margin: 0 20px 8px;
+    background: var(--coral-dim); border:1px solid var(--coral);
+    border-radius: var(--radius-md); padding: 13px 14px;
+    display:flex; align-items:center; gap:10px;
+    animation: shakeIn 0.4s cubic-bezier(.36,.07,.19,.97);
+  }
+  @keyframes shakeIn{
+    0%{ opacity:0; transform: translateX(-6px);}
+    30%{ transform: translateX(4px);}
+    60%{ transform: translateX(-2px);}
+    100%{ opacity:1; transform: translateX(0);}
+  }
+  .nudge-icon{ font-size:18px; flex-shrink:0; }
+  .nudge-text{ flex:1; font-size:13px; font-weight:600; color:#FFB3AB; line-height:1.4; }
+  .nudge-dismiss{
+    background:none; border:none; color:#FFB3AB; opacity:0.6;
+    width:24px; height:24px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; flex-shrink:0; font-size:13px;
+  }
+  .nudge-dismiss:active{ opacity:1; }
+
+  /* ---------- Celebration ---------- */
+  .celebration-overlay{
+    position: fixed; inset:0; background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(6px);
+    z-index: 250; display:flex; align-items:center; justify-content:center;
+    opacity:0; transition: opacity 0.25s ease; padding: 24px;
+  }
+  .celebration-overlay.show{ opacity:1; }
+  .celebration-card{
+    background: var(--bg-elevated); border:1px solid var(--lime);
+    border-radius: 28px; padding: 36px 28px; text-align:center;
+    max-width: 360px; width:100%;
+    box-shadow: 0 0 60px var(--lime-dim);
+    transform: scale(0.85); transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
+  }
+  .celebration-overlay.show .celebration-card{ transform: scale(1); }
+  .celebration-emoji{
+    font-size:44px; margin-bottom:14px;
+    animation: emojiPulse 0.6s ease-in-out infinite alternate;
+  }
+  @keyframes emojiPulse{ from{ transform: scale(1);} to{ transform: scale(1.12);} }
+  .celebration-title{
+    font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:28px;
+    letter-spacing:-0.01em; color: var(--lime); margin-bottom:10px;
+    text-shadow: 0 0 24px var(--lime-dim);
+  }
+  .celebration-sub{
+    font-size:14px; color: var(--text-dim); margin-bottom:24px; line-height:1.5;
+  }
+
+  /* ---------- Toast ---------- */
+  .toast{
+    position: fixed; top: 20px; left:50%; transform: translateX(-50%) translateY(-100px);
+    background: var(--bg-card); border:1px solid var(--line);
+    border-radius: var(--radius-sm); padding: 12px 18px;
+    font-size:13px; font-weight:600; z-index: 200;
+    transition: transform 0.3s cubic-bezier(.16,1,.3,1);
+    max-width: 90%; display:flex; align-items:center; gap:8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .toast.show{ transform: translateX(-50%) translateY(0); }
+  .toast.success{ border-color: var(--lime); }
+  .toast.error{ border-color: var(--coral); }
+
+  ::-webkit-scrollbar{ width:0; height:0; }
+
+  input:focus-visible, button:focus-visible, select:focus-visible{
+    outline: 2px solid var(--lime); outline-offset: 2px;
+  }
+</style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span>FUEL</div>
+    <div class="icon-btn" id="settingsBtn">⚙</div>
+  </div>
+
+  <div class="date-row">
+    <button id="prevDay">‹</button>
+    <div class="date-label-btn" id="openCalBtn">
+      <span class="cal-ic">📅</span>
+      <div class="date-label" id="dateLabel">TODAY</div>
+    </div>
+    <button id="nextDay">›</button>
+  </div>
+  <div style="display:flex; justify-content:center; padding: 0 20px 4px;">
+    <div class="streak-badge" id="streakBadge">🔥 0 day streak</div>
+  </div>
+
+  <!-- GAUGE -->
+  <div class="gauge-section">
+    <div class="gauge-glow" id="gaugeGlow"></div>
+    <div class="gauge-wrap">
+      <div class="gauge-ticks" id="gaugeTicks"></div>
+      <svg viewBox="0 0 280 280">
+        <circle class="gauge-bg" cx="140" cy="140" r="123"/>
+        <circle class="gauge-fill" id="gaugeFill" cx="140" cy="140" r="123"/>
+      </svg>
+      <div class="gauge-center">
+        <div class="gauge-num" id="gaugeNum">0</div>
+        <div class="gauge-label" id="gaugeLabel">KCAL LEFT</div>
+        <div class="gauge-sub">
+          <span>EATEN <b id="eatenNum">0</b></span>
+          <span>GOAL <b id="goalNum">2000</b></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MACROS -->
+  <div class="macro-row">
+    <div class="macro-card">
+      <div class="macro-ring">
+        <svg viewBox="0 0 56 56">
+          <circle class="macro-ring-bg" cx="28" cy="28" r="24"/>
+          <circle class="macro-ring-fill" id="ringP" cx="28" cy="28" r="24" stroke="#5C7FFF"/>
+        </svg>
+        <div class="macro-ring-icon">🔵</div>
+      </div>
+      <div class="macro-name">Protein</div>
+      <div class="macro-amt" id="amtP">0<span class="of">/0g</span></div>
+    </div>
+    <div class="macro-card">
+      <div class="macro-ring">
+        <svg viewBox="0 0 56 56">
+          <circle class="macro-ring-bg" cx="28" cy="28" r="24"/>
+          <circle class="macro-ring-fill" id="ringC" cx="28" cy="28" r="24" stroke="#FFB84D"/>
+        </svg>
+        <div class="macro-ring-icon">🟠</div>
+      </div>
+      <div class="macro-name">Carbs</div>
+      <div class="macro-amt" id="amtC">0<span class="of">/0g</span></div>
+    </div>
+    <div class="macro-card">
+      <div class="macro-ring">
+        <svg viewBox="0 0 56 56">
+          <circle class="macro-ring-bg" cx="28" cy="28" r="24"/>
+          <circle class="macro-ring-fill" id="ringF" cx="28" cy="28" r="24" stroke="#FF5C4D"/>
+        </svg>
+        <div class="macro-ring-icon">🔴</div>
+      </div>
+      <div class="macro-name">Fats</div>
+      <div class="macro-amt" id="amtF">0<span class="of">/0g</span></div>
+    </div>
+  </div>
+
+  <!-- PROTEIN NUDGE BANNER -->
+  <div class="protein-nudge" id="proteinNudge" style="display:none;"></div>
+
+  <!-- LOG -->
+  <div class="section-head">
+    <div class="section-title">Today's Log</div>
+    <button class="section-action" id="clearDayBtn">Clear day</button>
+  </div>
+  <div class="log-list" id="logList"></div>
+
+  <!-- FAB -->
+  <div class="fab-row">
+    <button class="fab fab-manual" id="manualBtn">✎ Manual</button>
+    <button class="fab fab-camera" id="cameraBtn">📷 Snap Food</button>
+  </div>
+
+  <!-- CAMERA MODAL -->
+  <div class="modal-overlay" id="cameraModal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-head">
+        <div class="modal-title">Scan Food</div>
+        <div class="modal-close" data-close="cameraModal">✕</div>
+      </div>
+      <div class="modal-body" id="cameraModalBody">
+        <div class="capture-zone" id="captureZone">
+          <div class="capture-icon">📸</div>
+          <div class="capture-text">Take or upload a photo</div>
+          <div class="capture-sub">AI will estimate calories & macros</div>
+        </div>
+        <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none">
+        <div class="api-key-note" id="apiKeyHint"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDAR MODAL -->
+  <div class="modal-overlay" id="calendarModal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-head">
+        <div class="modal-title">Calendar</div>
+        <div class="modal-close" data-close="calendarModal">✕</div>
+      </div>
+      <div class="modal-body">
+        <div class="cal-month-row">
+          <div class="cal-nav-btn" id="calPrevMonth">‹</div>
+          <div class="cal-month-label" id="calMonthLabel">June 2026</div>
+          <div class="cal-nav-btn" id="calNextMonth">›</div>
+        </div>
+        <div class="cal-weekdays">
+          <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
+        </div>
+        <div class="cal-grid" id="calGrid"></div>
+        <div class="cal-legend">
+          <span><span class="dot hit"></span>Goal hit</span>
+          <span><span class="dot logged"></span>Logged</span>
+          <span><span class="dot over"></span>Over budget</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANUAL MODAL -->
+  <div class="modal-overlay" id="manualModal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-head">
+        <div class="modal-title">Log Food</div>
+        <div class="modal-close" data-close="manualModal">✕</div>
+      </div>
+      <div class="modal-body">
+        <div class="chip-row" id="quickChips"></div>
+
+        <div class="field">
+          <label>What did you eat?</label>
+          <div class="smart-input-row">
+            <input type="text" id="mName" placeholder="e.g. 2 rotis, 200g grilled chicken">
+            <button class="smart-btn" id="smartLookupBtn" aria-label="Auto-fill nutrition">✨</button>
+          </div>
+          <div class="smart-hint" id="smartHint">Type a food + quantity, then tap ✨ to auto-fill nutrition</div>
+        </div>
+
+        <div class="smart-status" id="smartStatus" style="display:none"></div>
+
+        <div class="field">
+          <label>Calories (kcal)</label>
+          <input type="number" id="mCal" placeholder="0" inputmode="numeric">
+        </div>
+        <div class="macro-input-grid">
+          <div class="field">
+            <label>Protein (g)</label>
+            <input type="number" id="mP" placeholder="0" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label>Carbs (g)</label>
+            <input type="number" id="mC" placeholder="0" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label>Fats (g)</label>
+            <input type="number" id="mF" placeholder="0" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label>Fiber (g)</label>
+            <input type="number" id="mFiber" placeholder="0" inputmode="numeric">
+          </div>
+        </div>
+        <div class="field">
+          <label>Servings</label>
+          <input type="number" id="mServ" placeholder="1" value="1" inputmode="numeric">
+        </div>
+        <button class="btn-primary" id="saveManualBtn">Add to log</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-head">
+        <div class="modal-title">Settings</div>
+        <div class="modal-close" data-close="settingsModal">✕</div>
+      </div>
+      <div class="modal-body">
+
+        <div class="toggle-group">
+          <div class="toggle-btn" id="toggleManualGoal">Manual Goal</div>
+          <div class="toggle-btn" id="toggleAutoGoal">Auto-Calculate</div>
+        </div>
+
+        <div id="manualGoalFields">
+          <div class="macro-input-grid">
+            <div class="field"><label>Calories</label><input type="number" id="sCal" inputmode="numeric"></div>
+            <div class="field"><label>Protein (g)</label><input type="number" id="sP" inputmode="numeric"></div>
+            <div class="field"><label>Carbs (g)</label><input type="number" id="sC" inputmode="numeric"></div>
+            <div class="field"><label>Fats (g)</label><input type="number" id="sF" inputmode="numeric"></div>
+          </div>
+        </div>
+
+        <div id="autoGoalFields" style="display:none">
+          <div class="field-row">
+            <div class="field">
+              <label>Sex</label>
+              <select id="aSex">
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Age</label>
+              <input type="number" id="aAge" placeholder="25" inputmode="numeric">
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Weight (kg)</label>
+              <input type="number" id="aWeight" placeholder="70" inputmode="numeric">
+            </div>
+            <div class="field">
+              <label>Height (cm)</label>
+              <input type="number" id="aHeight" placeholder="175" inputmode="numeric">
+            </div>
+          </div>
+          <div class="field">
+            <label>Activity level</label>
+            <select id="aActivity">
+              <option value="1.2">Sedentary (little exercise)</option>
+              <option value="1.375">Light (1-3 days/week)</option>
+              <option value="1.55" selected>Moderate (3-5 days/week)</option>
+              <option value="1.725">Active (6-7 days/week)</option>
+              <option value="1.9">Athlete (2x/day training)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Goal</label>
+            <select id="aGoal">
+              <option value="lose">Lose fat</option>
+              <option value="maintain" selected>Maintain</option>
+              <option value="gain">Build muscle</option>
+            </select>
+          </div>
+
+          <div class="goal-preview" id="goalPreview">
+            <div class="item"><div class="v">—</div><div class="l">Kcal</div></div>
+            <div class="item"><div class="v">—</div><div class="l">Protein</div></div>
+            <div class="item"><div class="v">—</div><div class="l">Carbs</div></div>
+            <div class="item"><div class="v">—</div><div class="l">Fats</div></div>
+          </div>
+        </div>
+
+        <button class="btn-primary" id="saveSettingsBtn">Save Goals</button>
+
+        <div style="height:24px"></div>
+        <div class="field">
+          <label>Groq API key (for photo scanning + smart lookup)</label>
+          <input type="password" id="apiKeyInput" placeholder="gsk_...">
+          <div class="api-key-note">
+            Get a <b>free, no-credit-card</b> key at <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a> — sign up with email or Google, then click "Create API Key." Stored only in this browser — never sent anywhere except Groq's API.
+          </div>
+        </div>
+        <button class="btn-secondary" id="saveKeyBtn">Save API Key</button>
+
+        <button class="btn-secondary" id="resetAllBtn" style="color:#FF8C7A; border-color:#FF5C4D55; margin-top:24px;">Reset All Data</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// FUEL — Calorie & Macro Tracker
+// All data stored locally in this browser (localStorage)
+// ============================================================
+
+const STORAGE_KEYS = {
+  GOALS: 'fuel_goals',
+  GOAL_MODE: 'fuel_goal_mode', // 'manual' | 'auto'
+  AUTO_PROFILE: 'fuel_auto_profile',
+  API_KEY: 'fuel_api_key', // Groq API key from console.groq.com (free, no card)
+  LOGS: 'fuel_logs', // { 'YYYY-MM-DD': [ {id, name, cal, p, c, f, fiber, time, emoji} ] }
+};
+
+const DEFAULT_GOALS = { cal: 2000, p: 150, c: 200, f: 65 };
+
+let state = {
+  goals: load(STORAGE_KEYS.GOALS, DEFAULT_GOALS),
+  goalMode: load(STORAGE_KEYS.GOAL_MODE, 'manual'),
+  autoProfile: load(STORAGE_KEYS.AUTO_PROFILE, { sex:'male', age:25, weight:70, height:175, activity:1.55, goal:'maintain' }),
+  apiKey: load(STORAGE_KEYS.API_KEY, ''),
+  logs: load(STORAGE_KEYS.LOGS, {}),
+  currentDate: todayStr(),
+  pendingPhotoResult: null,
+};
+
+function load(key, fallback){
+  try{
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  }catch(e){ return fallback; }
+}
+function save(key, value){
+  try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){ console.error('Storage failed', e); }
+}
+
+// ---------------- Groq API helper ----------------
+// Calls Groq's free API (console.groq.com - no credit card required).
+// imagePart (optional): { mimeType, base64Data } for photo analysis (uses a vision model).
+async function callGroq(promptText, imagePart){
+  if(!state.apiKey) throw new Error('No API key set');
+
+  // Groq vision models only support image input on specific models
+  const model = imagePart ? 'meta-llama/llama-4-scout-17b-16e-instruct' : 'llama-3.3-70b-versatile';
+
+  let userContent;
+  if(imagePart){
+    userContent = [
+      { type: 'text', text: promptText },
+      { type: 'image_url', image_url: { url: `data:${imagePart.mimeType};base64,${imagePart.base64Data}` } }
+    ];
+  }else{
+    userContent = promptText;
+  }
+
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${state.apiKey}`
+    },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: 'user', content: userContent }],
+      temperature: 0.4,
+      max_tokens: 800
+    })
+  });
+
+  const data = await response.json();
+
+  if(!response.ok){
+    const errMsg = data?.error?.message || `Groq API error ${response.status}`;
+    throw new Error(errMsg);
+  }
+
+  const text = data?.choices?.[0]?.message?.content;
+  if(!text) throw new Error('No response from Groq');
+
+  return text;
+}
+
+function extractJson(text){
+  let str = text.trim();
+  if(str.includes('```')){
+    str = str.split('```').find(p => {
+      const t = p.trim();
+      return t.startsWith('{') || t.toLowerCase().startsWith('json');
+    }) || str;
+    str = str.replace(/^json/i, '').trim();
+  }
+  const start = str.indexOf('{');
+  const end = str.lastIndexOf('}') + 1;
+  if(start < 0 || end <= start) throw new Error('No JSON found in response');
+  return JSON.parse(str.slice(start, end));
+}
+
+function todayStr(d = new Date()){
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function formatDateLabel(dateStr){
+  const today = todayStr();
+  const d = new Date(dateStr + 'T00:00:00');
+  const yest = new Date(); yest.setDate(yest.getDate()-1);
+  if(dateStr === today) return 'TODAY';
+  if(dateStr === todayStr(yest)) return 'YESTERDAY';
+  return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }).toUpperCase();
+}
+
+// ---------------- Gauge geometry ----------------
+const GAUGE_R = 123;
+const GAUGE_CIRC = 2 * Math.PI * GAUGE_R;
+const MACRO_R = 24;
+const MACRO_CIRC = 2 * Math.PI * MACRO_R;
+
+function buildTicks(){
+  const wrap = document.getElementById('gaugeTicks');
+  wrap.innerHTML = '';
+  const total = 40;
+  for(let i=0;i<total;i++){
+    const angle = (i / total) * 360;
+    const tick = document.createElement('div');
+    tick.style.transform = `translate(-50%,-50%) rotate(${angle}deg)`;
+    wrap.appendChild(tick);
+  }
+}
+
+// ---------------- Rendering ----------------
+function getDayLogs(){
+  return state.logs[state.currentDate] || [];
+}
+
+function dayTotals(){
+  const logs = getDayLogs();
+  return logs.reduce((acc, item) => {
+    acc.cal += item.cal; acc.p += item.p; acc.c += item.c; acc.f += item.f; acc.fiber += (item.fiber||0);
+    return acc;
+  }, { cal:0, p:0, c:0, f:0, fiber:0 });
+}
+
+function totalsForDate(dateStr){
+  const logs = state.logs[dateStr] || [];
+  return logs.reduce((acc, item) => {
+    acc.cal += item.cal; acc.p += item.p; acc.c += item.c; acc.f += item.f; acc.fiber += (item.fiber||0);
+    return acc;
+  }, { cal:0, p:0, c:0, f:0, fiber:0 });
+}
+
+function calcStreak(){
+  let streak = 0;
+  let d = new Date();
+  // if today has no logs yet, start counting from yesterday so a streak isn't broken mid-day
+  const todayLogs = state.logs[todayStr(d)] || [];
+  if(todayLogs.length === 0){
+    d.setDate(d.getDate()-1);
+  }
+  while(true){
+    const ds = todayStr(d);
+    const logs = state.logs[ds] || [];
+    if(logs.length === 0) break;
+    streak++;
+    d.setDate(d.getDate()-1);
+  }
+  return streak;
+}
+
+function renderStreak(){
+  const streak = calcStreak();
+  const badge = document.getElementById('streakBadge');
+  badge.textContent = streak > 0 ? `🔥 ${streak} day streak` : '🔥 Start your streak today';
+  badge.classList.toggle('empty', streak === 0);
+}
+
+function render(){
+  document.getElementById('dateLabel').textContent = formatDateLabel(state.currentDate);
+  const totals = dayTotals();
+  const goals = state.goals;
+
+  // Gauge
+  const pct = Math.min(totals.cal / goals.cal, 1);
+  const offset = GAUGE_CIRC * (1 - pct);
+  const gaugeFill = document.getElementById('gaugeFill');
+  gaugeFill.style.strokeDasharray = GAUGE_CIRC;
+  gaugeFill.style.strokeDashoffset = offset;
+
+  const over = totals.cal > goals.cal;
+  gaugeFill.classList.toggle('over', over);
+
+  const hitGoal = totals.cal > 0 && pct >= 0.95 && !over;
+  gaugeFill.classList.toggle('hit', hitGoal);
+
+  const glow = document.getElementById('gaugeGlow');
+  glow.classList.toggle('over', over);
+
+  const remainAbs = Math.abs(goals.cal - totals.cal);
+  document.getElementById('gaugeNum').textContent = remainAbs.toLocaleString();
+  document.getElementById('gaugeLabel').textContent = over ? 'KCAL OVER' : 'KCAL LEFT';
+  document.getElementById('eatenNum').textContent = totals.cal.toLocaleString();
+  document.getElementById('goalNum').textContent = goals.cal.toLocaleString();
+
+  // Streak
+  renderStreak();
+
+  // Macro rings
+  setMacroRing('ringP', 'amtP', totals.p, goals.p);
+  setMacroRing('ringC', 'amtC', totals.c, goals.c);
+  setMacroRing('ringF', 'amtF', totals.f, goals.f);
+
+  // Log list
+  renderLogList();
+
+  // Celebration + protein nudge (only meaningful for today, and only once food is logged)
+  if(state.currentDate === todayStr()){
+    checkGoalCelebration(totals, goals);
+    renderProteinNudge(totals, goals);
+  }else{
+    document.getElementById('proteinNudge').style.display = 'none';
+  }
+}
+
+function setMacroRing(ringId, amtId, val, goal){
+  const ring = document.getElementById(ringId);
+  const pct = goal > 0 ? Math.min(val / goal, 1) : 0;
+  ring.style.strokeDasharray = MACRO_CIRC;
+  ring.style.strokeDashoffset = MACRO_CIRC * (1 - pct);
+  const amtEl = document.getElementById(amtId);
+  amtEl.innerHTML = `${Math.round(val)}<span class="of">/${Math.round(goal)}g</span>`;
+}
+
+function renderLogList(){
+  const list = document.getElementById('logList');
+  const logs = getDayLogs();
+  if(logs.length === 0){
+    list.innerHTML = `<div class="log-empty"><div class="big">No food logged yet</div>Snap a photo or add manually to get started</div>`;
+    return;
+  }
+  list.innerHTML = logs.slice().reverse().map(item => `
+    <div class="log-item" data-id="${item.id}">
+      <div class="log-thumb">${item.emoji || '🍽️'}</div>
+      <div class="log-info">
+        <div class="log-name">${escapeHtml(item.name)}</div>
+        <div class="log-macros">
+          <span class="p">P${Math.round(item.p)}</span>
+          <span class="c">C${Math.round(item.c)}</span>
+          <span class="f">F${Math.round(item.f)}</span>
+          ${item.fiber ? `<span class="fi">Fi${Math.round(item.fiber)}</span>` : ''}
+          <span>${item.time || ''}</span>
+        </div>
+      </div>
+      <div class="log-cal">${Math.round(item.cal)}</div>
+      <button class="log-del" data-del="${item.id}">✕</button>
+    </div>
+  `).join('');
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ---------------- Log actions ----------------
+function addLogItem(item){
+  const logs = state.logs[state.currentDate] || [];
+  const now = new Date();
+  logs.push({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    name: item.name,
+    cal: Number(item.cal) || 0,
+    p: Number(item.p) || 0,
+    c: Number(item.c) || 0,
+    f: Number(item.f) || 0,
+    fiber: Number(item.fiber) || 0,
+    emoji: item.emoji || '🍽️',
+    time: now.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' }),
+  });
+  state.logs[state.currentDate] = logs;
+  save(STORAGE_KEYS.LOGS, state.logs);
+  render();
+}
+
+function deleteLogItem(id){
+  const logs = state.logs[state.currentDate] || [];
+  state.logs[state.currentDate] = logs.filter(i => i.id !== id);
+  save(STORAGE_KEYS.LOGS, state.logs);
+  render();
+  showToast('Removed from log', 'success');
+}
+
+document.getElementById('logList').addEventListener('click', (e) => {
+  const delBtn = e.target.closest('[data-del]');
+  if(delBtn){ deleteLogItem(delBtn.dataset.del); }
+});
+
+document.getElementById('clearDayBtn').addEventListener('click', () => {
+  if(getDayLogs().length === 0) return;
+  if(confirm('Clear all food logged today?')){
+    state.logs[state.currentDate] = [];
+    save(STORAGE_KEYS.LOGS, state.logs);
+    render();
+    showToast('Day cleared', 'success');
+  }
+});
+
+// ---------------- Date navigation ----------------
+document.getElementById('prevDay').addEventListener('click', () => {
+  const d = new Date(state.currentDate + 'T00:00:00');
+  d.setDate(d.getDate()-1);
+  state.currentDate = todayStr(d);
+  render();
+});
+document.getElementById('nextDay').addEventListener('click', () => {
+  const d = new Date(state.currentDate + 'T00:00:00');
+  d.setDate(d.getDate()+1);
+  const next = todayStr(d);
+  if(next > todayStr()) return; // no future
+  state.currentDate = next;
+  render();
+});
+
+// ---------------- Calendar ----------------
+let calViewDate = new Date(); // month currently shown in calendar
+
+document.getElementById('openCalBtn').addEventListener('click', () => {
+  calViewDate = new Date(state.currentDate + 'T00:00:00');
+  renderCalendar();
+  openModal('calendarModal');
+});
+
+document.getElementById('calPrevMonth').addEventListener('click', () => {
+  calViewDate.setMonth(calViewDate.getMonth()-1);
+  renderCalendar();
+});
+document.getElementById('calNextMonth').addEventListener('click', () => {
+  const next = new Date(calViewDate);
+  next.setMonth(next.getMonth()+1);
+  const now = new Date();
+  if(next.getFullYear() > now.getFullYear() || (next.getFullYear()===now.getFullYear() && next.getMonth() > now.getMonth())) return;
+  calViewDate = next;
+  renderCalendar();
+});
+
+function renderCalendar(){
+  const year = calViewDate.getFullYear();
+  const month = calViewDate.getMonth();
+  document.getElementById('calMonthLabel').textContent =
+    calViewDate.toLocaleDateString('en-US', { month:'long', year:'numeric' });
+
+  const firstDay = new Date(year, month, 1);
+  const startWeekday = firstDay.getDay();
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const today = todayStr();
+
+  const grid = document.getElementById('calGrid');
+  let html = '';
+
+  for(let i=0;i<startWeekday;i++){
+    html += `<div class="cal-day empty-cell"></div>`;
+  }
+
+  for(let day=1; day<=daysInMonth; day++){
+    const dateObj = new Date(year, month, day);
+    const ds = todayStr(dateObj);
+    const isFuture = ds > today;
+    const isToday = ds === today;
+    const isSelected = ds === state.currentDate;
+    const totals = totalsForDate(ds);
+    const hasLogs = (state.logs[ds] || []).length > 0;
+
+    let dotHtml = '';
+    if(hasLogs && !isFuture){
+      const pct = state.goals.cal > 0 ? totals.cal / state.goals.cal : 0;
+      let dotClass = 'logged';
+      if(totals.cal > state.goals.cal) dotClass = 'over';
+      else if(pct >= 0.85) dotClass = 'hit';
+      dotHtml = `<div class="dot-row"><div class="dot ${dotClass}"></div></div>`;
+    }
+
+    const classes = ['cal-day'];
+    if(isFuture) classes.push('future');
+    if(isToday) classes.push('today');
+    if(isSelected) classes.push('selected');
+
+    html += `<div class="${classes.join(' ')}" data-date="${ds}" style="animation-delay:${day*8}ms">
+      ${day}${dotHtml}
+    </div>`;
+  }
+
+  grid.innerHTML = html;
+  grid.querySelectorAll('.cal-day[data-date]:not(.future)').forEach(cell => {
+    cell.addEventListener('click', () => {
+      state.currentDate = cell.dataset.date;
+      render();
+      closeModal('calendarModal');
+    });
+  });
+}
+
+// ---------------- Modals ----------------
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('[data-close]').forEach(btn => {
+  btn.addEventListener('click', () => closeModal(btn.dataset.close));
+});
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if(e.target === overlay) closeModal(overlay.id);
+  });
+});
+
+document.getElementById('settingsBtn').addEventListener('click', () => {
+  populateSettingsForm();
+  openModal('settingsModal');
+});
+
+// ---------------- Manual entry ----------------
+const QUICK_FOODS = [
+  { name:'Banana', cal:105, p:1.3, c:27, f:0.4, fiber:3.1, emoji:'🍌' },
+  { name:'Chicken Breast (100g)', cal:165, p:31, c:0, f:3.6, fiber:0, emoji:'🍗' },
+  { name:'Rice (1 cup cooked)', cal:206, p:4.3, c:45, f:0.4, fiber:0.6, emoji:'🍚' },
+  { name:'Egg (1 large)', cal:78, p:6.3, c:0.6, f:5.3, fiber:0, emoji:'🥚' },
+  { name:'Greek Yogurt (170g)', cal:100, p:17, c:6, f:0.7, fiber:0, emoji:'🥛' },
+  { name:'Almonds (28g)', cal:164, p:6, c:6, f:14, fiber:3.5, emoji:'🥜' },
+  { name:'Protein Shake', cal:120, p:24, c:3, f:1.5, fiber:1, emoji:'🥤' },
+  { name:'Avocado (half)', cal:120, p:1.5, c:6, f:11, fiber:6.7, emoji:'🥑' },
+];
+
+function renderQuickChips(){
+  const row = document.getElementById('quickChips');
+  row.innerHTML = QUICK_FOODS.map((f,i) => `<div class="chip" data-quick="${i}">${f.emoji} ${f.name}</div>`).join('');
+  row.querySelectorAll('[data-quick]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const f = QUICK_FOODS[chip.dataset.quick];
+      document.getElementById('mName').value = f.name;
+      document.getElementById('mCal').value = f.cal;
+      document.getElementById('mP').value = f.p;
+      document.getElementById('mC').value = f.c;
+      document.getElementById('mF').value = f.f;
+      document.getElementById('mFiber').value = f.fiber || 0;
+      document.getElementById('mServ').value = 1;
+      pendingManualEmoji = f.emoji || '🍽️';
+      hideSmartStatus();
+    });
+  });
+}
+
+let pendingManualEmoji = '🍽️';
+let smartLookupAbort = null;
+
+document.getElementById('manualBtn').addEventListener('click', () => {
+  ['mName','mCal','mP','mC','mF','mFiber'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('mServ').value = 1;
+  pendingManualEmoji = '🍽️';
+  renderQuickChips();
+  hideSmartStatus();
+  setSmartButtonState('idle');
+  openModal('manualModal');
+});
+
+document.getElementById('mName').addEventListener('input', () => {
+  hideSmartStatus();
+});
+
+document.getElementById('mName').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    runSmartLookup();
+  }
+});
+
+document.getElementById('smartLookupBtn').addEventListener('click', runSmartLookup);
+
+function setSmartButtonState(mode){
+  const btn = document.getElementById('smartLookupBtn');
+  if(mode === 'loading'){
+    btn.disabled = true;
+    btn.classList.add('spinning');
+    btn.textContent = '⟳';
+  }else{
+    btn.disabled = false;
+    btn.classList.remove('spinning');
+    btn.textContent = '✨';
+  }
+}
+
+function hideSmartStatus(){
+  const el = document.getElementById('smartStatus');
+  el.style.display = 'none';
+  el.className = 'smart-status';
+}
+
+function showSmartStatus(html, type){
+  const el = document.getElementById('smartStatus');
+  el.style.display = 'flex';
+  el.className = `smart-status ${type}`;
+  el.innerHTML = html;
+}
+
+async function runSmartLookup(){
+  const query = document.getElementById('mName').value.trim();
+  if(!query){
+    showToast('Type a food name first', 'error');
+    return;
+  }
+  if(!state.apiKey){
+    showSmartStatus(`No API key set. <a href="#" id="smartGoSettings" style="color:var(--blue)">Add a free Groq API key</a> to enable auto-fill, or fill in the values manually below.`, 'error');
+    document.getElementById('smartGoSettings').addEventListener('click', (e) => {
+      e.preventDefault();
+      closeModal('manualModal');
+      populateSettingsForm();
+      openModal('settingsModal');
+    });
+    return;
+  }
+
+  setSmartButtonState('loading');
+  showSmartStatus(`<div class="smart-mini-spinner"></div><span>Looking up nutrition for "${escapeHtml(query)}"...</span>`, 'loading');
+
+  try{
+    const prompt = `The user typed this food entry, which may include a quantity (e.g. "2 rotis", "200g grilled chicken", "1 bowl rice", "large banana"): "${query}"
+
+Estimate its nutrition based on the quantity given (if no quantity given, assume 1 standard serving). Respond ONLY with valid JSON, no markdown, no backticks, no explanation:
+{"name": "clean food name with quantity, e.g. '2 rotis'", "emoji": "one matching food emoji", "calories": number, "protein_g": number, "carbs_g": number, "fats_g": number, "fiber_g": number, "confidence": "high/medium/low"}`;
+
+    const text = await callGroq(prompt);
+    const result = extractJson(text);
+
+    document.getElementById('mName').value = result.name || query;
+    document.getElementById('mCal').value = Math.round(result.calories || 0);
+    document.getElementById('mP').value = Math.round(result.protein_g || 0);
+    document.getElementById('mC').value = Math.round(result.carbs_g || 0);
+    document.getElementById('mF').value = Math.round(result.fats_g || 0);
+    document.getElementById('mFiber').value = Math.round(result.fiber_g || 0);
+    document.getElementById('mServ').value = 1;
+    pendingManualEmoji = result.emoji || '🍽️';
+
+    showSmartStatus(`
+      <div class="ss-title">${result.emoji || '🍽️'} Filled in — ${(result.confidence||'medium').toUpperCase()} confidence</div>
+      <div class="ss-macros">
+        <span>${Math.round(result.calories||0)} kcal</span>
+        <span>P ${Math.round(result.protein_g||0)}g</span>
+        <span>C ${Math.round(result.carbs_g||0)}g</span>
+        <span>F ${Math.round(result.fats_g||0)}g</span>
+        <span>Fiber ${Math.round(result.fiber_g||0)}g</span>
+      </div>
+    `, 'success');
+
+  }catch(err){
+    console.error(err);
+    showSmartStatus(`<span>⚠ Couldn't look that up: ${escapeHtml(err.message)}. You can still fill in values manually below.</span>`, 'error');
+  }finally{
+    setSmartButtonState('idle');
+  }
+}
+
+document.getElementById('saveManualBtn').addEventListener('click', () => {
+  const name = document.getElementById('mName').value.trim();
+  const cal = parseFloat(document.getElementById('mCal').value) || 0;
+  const p = parseFloat(document.getElementById('mP').value) || 0;
+  const c = parseFloat(document.getElementById('mC').value) || 0;
+  const f = parseFloat(document.getElementById('mF').value) || 0;
+  const fiber = parseFloat(document.getElementById('mFiber').value) || 0;
+  const serv = parseFloat(document.getElementById('mServ').value) || 1;
+
+  if(!name){ showToast('Enter a food name', 'error'); return; }
+  if(cal <= 0){ showToast('Enter calories', 'error'); return; }
+
+  addLogItem({ name, cal: cal*serv, p: p*serv, c: c*serv, f: f*serv, fiber: fiber*serv, emoji: pendingManualEmoji });
+  closeModal('manualModal');
+  showToast(`Added ${name}`, 'success');
+});
+
+// ---------------- Camera / Photo AI ----------------
+document.getElementById('cameraBtn').addEventListener('click', () => {
+  resetCameraModal();
+  openModal('cameraModal');
+});
+
+function resetCameraModal(){
+  state.pendingPhotoResult = null;
+  const body = document.getElementById('cameraModalBody');
+  body.innerHTML = `
+    <div class="capture-zone" id="captureZone">
+      <div class="capture-icon">📸</div>
+      <div class="capture-text">Take or upload a photo</div>
+      <div class="capture-sub">AI will estimate calories & macros</div>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none">
+    <div class="api-key-note" id="apiKeyHint"></div>
+  `;
+  document.getElementById('captureZone').addEventListener('click', () => {
+    document.getElementById('fileInput').click();
+  });
+  document.getElementById('fileInput').addEventListener('change', handlePhotoSelect);
+
+  if(!state.apiKey){
+    document.getElementById('apiKeyHint').innerHTML = `No API key set — you'll be able to enter details manually after the photo, or <a href="#" id="goToSettingsLink">add a free Groq API key</a> for automatic recognition.`;
+    document.getElementById('goToSettingsLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      closeModal('cameraModal');
+      populateSettingsForm();
+      openModal('settingsModal');
+    });
+  }
+}
+
+function handlePhotoSelect(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const dataUrl = ev.target.result;
+    showPhotoPreview(dataUrl);
+    if(state.apiKey){
+      analyzePhoto(dataUrl);
+    }else{
+      showManualAfterPhoto(dataUrl, null);
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function showPhotoPreview(dataUrl){
+  const body = document.getElementById('cameraModalBody');
+  body.innerHTML = `
+    <img src="${dataUrl}" class="preview-img" id="previewImg">
+    <div class="analyzing" id="analyzingBlock">
+      <div class="spinner"></div>
+      <div class="analyzing-text">Analyzing your food...</div>
+      <div class="analyzing-sub">Identifying ingredients & estimating portions</div>
+    </div>
+  `;
+}
+
+async function analyzePhoto(dataUrl){
+  try{
+    const base64 = dataUrl.split(',')[1];
+    const mediaType = dataUrl.match(/data:(.*?);/)[1];
+
+    const prompt = `Look at this food photo and estimate its nutrition. Respond ONLY with valid JSON, no markdown, no backticks, no explanation:
+{"name": "short food name", "emoji": "one matching food emoji", "confidence": "high/medium/low", "calories": number, "protein_g": number, "carbs_g": number, "fats_g": number, "fiber_g": number, "note": "brief 1-sentence note about portion size assumption"}`;
+
+    const text = await callGroq(prompt, { mimeType: mediaType, base64Data: base64 });
+    const result = extractJson(text);
+    showPhotoResult(dataUrl, result);
+
+  }catch(err){
+    console.error(err);
+    showPhotoError(dataUrl, err.message);
+  }
+}
+
+function showPhotoResult(dataUrl, result){
+  state.pendingPhotoResult = result;
+  const body = document.getElementById('cameraModalBody');
+  body.innerHTML = `
+    <img src="${dataUrl}" class="preview-img">
+    <div class="result-card">
+      <div class="result-name">${result.emoji || '🍽️'} ${escapeHtml(result.name || 'Food')}</div>
+      <div class="result-conf">CONFIDENCE: ${(result.confidence || 'medium').toUpperCase()} ${result.note ? '· ' + escapeHtml(result.note) : ''}</div>
+      <div class="result-macros">
+        <div class="result-macro"><div class="val">${Math.round(result.calories||0)}</div><div class="lbl">Kcal</div></div>
+        <div class="result-macro"><div class="val">${Math.round(result.protein_g||0)}g</div><div class="lbl">Protein</div></div>
+        <div class="result-macro"><div class="val">${Math.round(result.carbs_g||0)}g</div><div class="lbl">Carbs</div></div>
+        <div class="result-macro"><div class="val">${Math.round(result.fats_g||0)}g</div><div class="lbl">Fats</div></div>
+        <div class="result-macro"><div class="val">${Math.round(result.fiber_g||0)}g</div><div class="lbl">Fiber</div></div>
+      </div>
+    </div>
+    <button class="btn-primary" id="confirmPhotoBtn">Add to Log</button>
+    <button class="btn-secondary" id="editPhotoBtn">Edit values</button>
+    <button class="btn-secondary" id="retakeBtn">Retake photo</button>
+  `;
+
+  document.getElementById('confirmPhotoBtn').addEventListener('click', () => {
+    addLogItem({
+      name: result.name || 'Food',
+      cal: result.calories || 0,
+      p: result.protein_g || 0,
+      c: result.carbs_g || 0,
+      f: result.fats_g || 0,
+      fiber: result.fiber_g || 0,
+      emoji: result.emoji || '🍽️'
+    });
+    closeModal('cameraModal');
+    showToast(`Added ${result.name}`, 'success');
+  });
+
+  document.getElementById('editPhotoBtn').addEventListener('click', () => {
+    showManualAfterPhoto(dataUrl, result);
+  });
+
+  document.getElementById('retakeBtn').addEventListener('click', () => resetCameraModal());
+}
+
+function showPhotoError(dataUrl, message){
+  const body = document.getElementById('cameraModalBody');
+  body.innerHTML = `
+    <img src="${dataUrl}" class="preview-img">
+    <div class="error-box"><b>Couldn't analyze photo.</b><br>${escapeHtml(message)}</div>
+    <button class="btn-primary" id="enterManuallyBtn">Enter details manually</button>
+    <button class="btn-secondary" id="retryBtn">Try again</button>
+  `;
+  document.getElementById('enterManuallyBtn').addEventListener('click', () => showManualAfterPhoto(dataUrl, null));
+  document.getElementById('retryBtn').addEventListener('click', () => analyzePhoto(dataUrl));
+}
+
+function showManualAfterPhoto(dataUrl, result){
+  const body = document.getElementById('cameraModalBody');
+  body.innerHTML = `
+    <img src="${dataUrl}" class="preview-img">
+    <div class="field"><label>Food name</label><input type="text" id="pName" value="${result?.name ? escapeHtml(result.name) : ''}" placeholder="What did you eat?"></div>
+    <div class="field"><label>Calories</label><input type="number" id="pCal" value="${result?.calories || ''}" placeholder="0" inputmode="numeric"></div>
+    <div class="macro-input-grid">
+      <div class="field"><label>Protein (g)</label><input type="number" id="pP" value="${result?.protein_g || ''}" placeholder="0" inputmode="numeric"></div>
+      <div class="field"><label>Carbs (g)</label><input type="number" id="pC" value="${result?.carbs_g || ''}" placeholder="0" inputmode="numeric"></div>
+      <div class="field"><label>Fats (g)</label><input type="number" id="pF" value="${result?.fats_g || ''}" placeholder="0" inputmode="numeric"></div>
+      <div class="field"><label>Fiber (g)</label><input type="number" id="pFiber" value="${result?.fiber_g || ''}" placeholder="0" inputmode="numeric"></div>
+    </div>
+    <button class="btn-primary" id="savePhotoManualBtn">Add to Log</button>
+  `;
+  document.getElementById('savePhotoManualBtn').addEventListener('click', () => {
+    const name = document.getElementById('pName').value.trim();
+    const cal = parseFloat(document.getElementById('pCal').value) || 0;
+    if(!name){ showToast('Enter a food name', 'error'); return; }
+    if(cal <= 0){ showToast('Enter calories', 'error'); return; }
+    addLogItem({
+      name,
+      cal,
+      p: parseFloat(document.getElementById('pP').value) || 0,
+      c: parseFloat(document.getElementById('pC').value) || 0,
+      f: parseFloat(document.getElementById('pF').value) || 0,
+      fiber: parseFloat(document.getElementById('pFiber').value) || 0,
+      emoji: result?.emoji || '🍽️'
+    });
+    closeModal('cameraModal');
+    showToast(`Added ${name}`, 'success');
+  });
+}
+
+// ---------------- Settings: goal mode ----------------
+document.getElementById('toggleManualGoal').addEventListener('click', () => setGoalMode('manual'));
+document.getElementById('toggleAutoGoal').addEventListener('click', () => setGoalMode('auto'));
+
+function setGoalMode(mode){
+  state.goalMode = mode;
+  document.getElementById('toggleManualGoal').classList.toggle('active', mode==='manual');
+  document.getElementById('toggleAutoGoal').classList.toggle('active', mode==='auto');
+  document.getElementById('manualGoalFields').style.display = mode==='manual' ? 'block' : 'none';
+  document.getElementById('autoGoalFields').style.display = mode==='auto' ? 'block' : 'none';
+  if(mode === 'auto') updateAutoPreview();
+}
+
+function calcAutoGoals(profile){
+  const { sex, age, weight, height, activity, goal } = profile;
+  // Mifflin-St Jeor BMR
+  let bmr = sex === 'male'
+    ? (10*weight + 6.25*height - 5*age + 5)
+    : (10*weight + 6.25*height - 5*age - 161);
+  let tdee = bmr * activity;
+
+  if(goal === 'lose') tdee -= 500;
+  if(goal === 'gain') tdee += 300;
+
+  const cal = Math.round(tdee);
+  // Macro split: protein 1.8g/kg, fats 25% of cal, rest carbs
+  const p = Math.round(weight * (goal === 'lose' ? 2.0 : 1.8));
+  const f = Math.round((cal * 0.25) / 9);
+  const c = Math.round((cal - (p*4) - (f*9)) / 4);
+
+  return { cal, p, c: Math.max(c,0), f };
+}
+
+function updateAutoPreview(){
+  const profile = readAutoProfileForm();
+  const goals = calcAutoGoals(profile);
+  const preview = document.getElementById('goalPreview');
+  preview.innerHTML = `
+    <div class="item"><div class="v">${goals.cal}</div><div class="l">Kcal</div></div>
+    <div class="item"><div class="v">${goals.p}g</div><div class="l">Protein</div></div>
+    <div class="item"><div class="v">${goals.c}g</div><div class="l">Carbs</div></div>
+    <div class="item"><div class="v">${goals.f}g</div><div class="l">Fats</div></div>
+  `;
+}
+
+function readAutoProfileForm(){
+  return {
+    sex: document.getElementById('aSex').value,
+    age: parseFloat(document.getElementById('aAge').value) || 25,
+    weight: parseFloat(document.getElementById('aWeight').value) || 70,
+    height: parseFloat(document.getElementById('aHeight').value) || 175,
+    activity: parseFloat(document.getElementById('aActivity').value),
+    goal: document.getElementById('aGoal').value,
+  };
+}
+
+['aSex','aAge','aWeight','aHeight','aActivity','aGoal'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateAutoPreview);
+  document.getElementById(id).addEventListener('change', updateAutoPreview);
+});
+
+function populateSettingsForm(){
+  setGoalMode(state.goalMode);
+  document.getElementById('sCal').value = state.goals.cal;
+  document.getElementById('sP').value = state.goals.p;
+  document.getElementById('sC').value = state.goals.c;
+  document.getElementById('sF').value = state.goals.f;
+
+  const p = state.autoProfile;
+  document.getElementById('aSex').value = p.sex;
+  document.getElementById('aAge').value = p.age;
+  document.getElementById('aWeight').value = p.weight;
+  document.getElementById('aHeight').value = p.height;
+  document.getElementById('aActivity').value = p.activity;
+  document.getElementById('aGoal').value = p.goal;
+  updateAutoPreview();
+
+  document.getElementById('apiKeyInput').value = state.apiKey;
+}
+
+document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+  save(STORAGE_KEYS.GOAL_MODE, state.goalMode);
+
+  if(state.goalMode === 'manual'){
+    state.goals = {
+      cal: parseFloat(document.getElementById('sCal').value) || DEFAULT_GOALS.cal,
+      p: parseFloat(document.getElementById('sP').value) || DEFAULT_GOALS.p,
+      c: parseFloat(document.getElementById('sC').value) || DEFAULT_GOALS.c,
+      f: parseFloat(document.getElementById('sF').value) || DEFAULT_GOALS.f,
+    };
+  }else{
+    const profile = readAutoProfileForm();
+    state.autoProfile = profile;
+    save(STORAGE_KEYS.AUTO_PROFILE, profile);
+    state.goals = calcAutoGoals(profile);
+  }
+  save(STORAGE_KEYS.GOALS, state.goals);
+  render();
+  closeModal('settingsModal');
+  showToast('Goals updated', 'success');
+});
+
+document.getElementById('saveKeyBtn').addEventListener('click', () => {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  state.apiKey = key;
+  save(STORAGE_KEYS.API_KEY, key);
+  showToast(key ? 'API key saved' : 'API key cleared', 'success');
+});
+
+document.getElementById('resetAllBtn').addEventListener('click', () => {
+  if(confirm('This will erase ALL your data on this device. Are you sure?')){
+    localStorage.clear();
+    location.reload();
+  }
+});
+
+// ---------------- Toast ----------------
+let toastTimer;
+function showToast(msg, type='success'){
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.className = `toast show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+// ---------------- Goal celebration ----------------
+function celebrationKey(){ return `fuel_celebrated_${state.currentDate}`; }
+
+function checkGoalCelebration(totals, goals){
+  const calHit = totals.cal > 0 && totals.cal >= goals.cal * 0.95 && totals.cal <= goals.cal * 1.05;
+  const proteinHit = totals.p >= goals.p;
+  const bothHit = calHit && proteinHit;
+
+  if(!bothHit) return;
+
+  const alreadyCelebrated = sessionStorage.getItem(celebrationKey());
+  if(alreadyCelebrated) return;
+
+  sessionStorage.setItem(celebrationKey(), '1');
+  triggerCelebration();
+}
+
+function triggerCelebration(){
+  playHypeSound();
+  fireConfetti();
+  showCelebrationModal();
+}
+
+function playHypeSound(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ctx.currentTime;
+    // Ascending hype arpeggio + air-horn-ish blast
+    const notes = [
+      { freq: 523.25, start: 0,    dur: 0.12 },
+      { freq: 659.25, start: 0.10, dur: 0.12 },
+      { freq: 783.99, start: 0.20, dur: 0.12 },
+      { freq: 1046.5, start: 0.30, dur: 0.35 },
+      { freq: 1046.5, start: 0.65, dur: 0.18 },
+      { freq: 1318.5, start: 0.83, dur: 0.30 },
+    ];
+    notes.forEach(n => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.value = n.freq;
+      gain.gain.setValueAtTime(0, now + n.start);
+      gain.gain.linearRampToValueAtTime(0.18, now + n.start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + n.start + n.dur);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(now + n.start);
+      osc.stop(now + n.start + n.dur + 0.05);
+    });
+    setTimeout(() => ctx.close(), 1500);
+  }catch(e){ console.warn('Audio not available', e); }
+}
+
+function fireConfetti(){
+  const layer = document.createElement('div');
+  layer.style.cssText = 'position:fixed; inset:0; pointer-events:none; z-index:300; overflow:hidden;';
+  document.body.appendChild(layer);
+
+  const colors = ['#C8FF4D', '#5C7FFF', '#FF5C4D', '#FFB84D', '#F2EFE9'];
+  const count = 90;
+
+  for(let i=0;i<count;i++){
+    const piece = document.createElement('div');
+    const size = 6 + Math.random()*7;
+    const color = colors[Math.floor(Math.random()*colors.length)];
+    const startX = Math.random()*100;
+    const drift = (Math.random()-0.5)*200;
+    const duration = 2.2 + Math.random()*1.4;
+    const delay = Math.random()*0.4;
+    const rotateDir = Math.random() > 0.5 ? 1 : -1;
+    const shape = Math.random() > 0.5 ? '50%' : '2px';
+
+    piece.style.cssText = `
+      position:absolute; top:-20px; left:${startX}%;
+      width:${size}px; height:${size*0.6}px; background:${color};
+      border-radius:${shape};
+      animation: confettiFall ${duration}s cubic-bezier(.25,.46,.45,.94) ${delay}s forwards;
+      --drift: ${drift}px; --rot: ${rotateDir * (360 + Math.random()*360)}deg;
+    `;
+    layer.appendChild(piece);
+  }
+
+  if(!document.getElementById('confettiKeyframes')){
+    const style = document.createElement('style');
+    style.id = 'confettiKeyframes';
+    style.textContent = `
+      @keyframes confettiFall{
+        0%{ transform: translate(0,0) rotate(0deg); opacity:1; }
+        100%{ transform: translate(var(--drift), 100vh) rotate(var(--rot)); opacity:0; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  setTimeout(() => layer.remove(), 4000);
+}
+
+function showCelebrationModal(){
+  const overlay = document.createElement('div');
+  overlay.className = 'celebration-overlay';
+  overlay.innerHTML = `
+    <div class="celebration-card">
+      <div class="celebration-emoji">🔥🎉🔥</div>
+      <div class="celebration-title">GOAL SMASHED</div>
+      <div class="celebration-sub">Calories on point. Protein hit. You showed up today.</div>
+      <button class="btn-primary" id="celebrationCloseBtn">Let's go again tomorrow</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('show'));
+
+  const close = () => {
+    overlay.classList.remove('show');
+    setTimeout(() => overlay.remove(), 250);
+  };
+  document.getElementById('celebrationCloseBtn').addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if(e.target === overlay) close(); });
+}
+
+// ---------------- Protein nudge ----------------
+const PROTEIN_NUDGES = [
+  (gap) => `${gap}g left on the table. Weak.`,
+  (gap) => `${gap}g short of goal. The gains don't care about your excuses.`,
+  (gap) => `Protein's at a deficit — ${gap}g of gains walked right past you today.`,
+  (gap) => `${gap}g short. Somewhere a chicken breast is judging you.`,
+  (gap) => `You left ${gap}g of protein on the table. Rookie numbers.`,
+];
+
+function renderProteinNudge(totals, goals){
+  const banner = document.getElementById('proteinNudge');
+  const logs = getDayLogs();
+
+  if(logs.length === 0 || goals.p <= 0){
+    banner.style.display = 'none';
+    return;
+  }
+
+  const gap = Math.round(goals.p - totals.p);
+  const shortfallPct = gap / goals.p;
+
+  if(gap > 0 && shortfallPct >= 0.15){
+    const msgFn = PROTEIN_NUDGES[Math.floor((dateSeed(state.currentDate)) % PROTEIN_NUDGES.length)];
+    banner.innerHTML = `
+      <span class="nudge-icon">💪</span>
+      <span class="nudge-text">${msgFn(gap)}</span>
+      <button class="nudge-dismiss" id="dismissNudgeBtn" aria-label="Dismiss">✕</button>
+    `;
+    banner.style.display = sessionStorage.getItem(`fuel_nudge_dismissed_${state.currentDate}`) ? 'none' : 'flex';
+    const dismissBtn = document.getElementById('dismissNudgeBtn');
+    if(dismissBtn){
+      dismissBtn.addEventListener('click', () => {
+        sessionStorage.setItem(`fuel_nudge_dismissed_${state.currentDate}`, '1');
+        banner.style.display = 'none';
+      });
+    }
+  }else{
+    banner.style.display = 'none';
+  }
+}
+
+function dateSeed(dateStr){
+  let hash = 0;
+  for(let i=0;i<dateStr.length;i++){ hash = (hash*31 + dateStr.charCodeAt(i)) >>> 0; }
+  return hash;
+}
+
+// ---------------- Init ----------------
+function init(){
+  buildTicks();
+  setGoalMode(state.goalMode);
+  render();
+}
+init();
+
+</script>
+</body>
+</html>
